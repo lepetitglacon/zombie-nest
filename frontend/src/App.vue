@@ -18,9 +18,11 @@ router.beforeEach((to, from, next) => {
 </script>
 
 <template>
-  <div id="app">
-    <router-view />
-  </div>
+  <UApp>
+    <div id="app">
+      <router-view />
+    </div>
+  </UApp>
 </template>
 
 <style>

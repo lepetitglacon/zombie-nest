@@ -15,6 +15,7 @@
   "license": "ISC",
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.18.0",
+    "@nuxt/ui": "^3.3.0",
     "@tresjs/cientos": "^4.3.1",
     "@tresjs/core": "^4.3.6",
     "@types/node": "^24.2.0",

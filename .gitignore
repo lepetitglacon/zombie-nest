@@ -8,3 +8,8 @@ frontend/node_modules
 backend/.env
 frontend/.env
 
+frontend/auto-imports.d.ts
+frontend/components.d.ts
+
+
+

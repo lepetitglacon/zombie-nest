@@ -130,7 +130,7 @@ const profileStats = computed(() => [
     <div class="flex space-x-4">
       <UButton
         color="primary"
-        class="flex-1"
+        class="flex-1 hover:scale-105 hover:shadow-lg transition-all duration-200"
         @click="emit('editProfile')"
       >
         <UIcon name="i-heroicons-pencil" class="w-4 h-4 mr-2" />
@@ -140,7 +140,7 @@ const profileStats = computed(() => [
       <UButton
         variant="soft"
         color="gray"
-        class="flex-1"
+        class="flex-1 hover:scale-105 hover:shadow-md transition-all duration-200"
         @click="emit('gameSettings')"
       >
         <UIcon name="i-heroicons-cog-6-tooth" class="w-4 h-4 mr-2" />

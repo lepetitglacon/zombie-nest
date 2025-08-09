@@ -58,7 +58,7 @@ const featuredMap = {
               size="lg"
               color="green"
               @click="emit('joinFeaturedMap')"
-              class="flex-1 sm:flex-none"
+              class="flex-1 sm:flex-none hover:scale-105 hover:shadow-lg transition-all duration-200"
             >
               <UIcon name="i-heroicons-rocket-launch" class="w-4 h-4 mr-2" />
               Join Now
@@ -69,7 +69,7 @@ const featuredMap = {
               variant="soft"
               color="gray"
               @click="emit('quickMatch')"
-              class="flex-1 sm:flex-none"
+              class="flex-1 sm:flex-none hover:scale-105 hover:shadow-md transition-all duration-200"
             >
               <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 mr-2" />
               Quick Match

@@ -95,7 +95,7 @@ onMounted(() => {
     <StatsOverview :stats="stats" />
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-      <UTabs :items="tabs" class="w-full" default-value="play">
+      <UTabs :items="tabs" class="w-full" default-value="play" >
         <template #play>
           <div class="py-6">
             <QuickPlaySection

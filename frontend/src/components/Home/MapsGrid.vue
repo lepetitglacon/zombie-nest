@@ -76,6 +76,7 @@ const getRandomPlayerCount = () => Math.floor(Math.random() * 50) + 1
           <UButton
             block
             color="primary"
+            class="hover:scale-105 hover:shadow-md transition-all duration-200"
             @click="emit('playMap', map.id)"
           >
             <UIcon name="i-heroicons-play" class="w-4 h-4 mr-2" />

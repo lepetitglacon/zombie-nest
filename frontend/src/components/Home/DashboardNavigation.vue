@@ -28,6 +28,7 @@ const emit = defineEmits<{
           <UButton
             variant="soft"
             color="violet"
+            class="hover:scale-105 transition-transform duration-200"
             @click="emit('goToAdmin')"
           >
             <UIcon name="i-heroicons-cog-6-tooth" class="w-4 h-4 mr-2" />
@@ -37,6 +38,7 @@ const emit = defineEmits<{
           <UButton
             variant="soft"
             color="gray"
+            class="hover:scale-105 transition-transform duration-200"
             @click="emit('logout')"
           >
             <UIcon name="i-heroicons-arrow-right-on-rectangle" class="w-4 h-4 mr-2" />

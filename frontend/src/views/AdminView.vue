@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'radix-vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useRouter } from 'vue-router'
+import AddMapModal from '@/components/AddMapModal.vue'
+import api from '@/services/api'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -27,16 +29,71 @@ const users = ref([
   { id: 3, email: 'bob@example.com', createdAt: '2024-01-22', status: 'inactive' }
 ])
 
-const maps = ref([
-  { id: 1, name: 'Flora Square', type: 'survival', players: 24, status: 'active' },
-  { id: 2, name: 'Urban Ruins', type: 'pvp', players: 12, status: 'active' },
-  { id: 3, name: 'Forest Base', type: 'exploration', players: 8, status: 'maintenance' }
-])
+const showAddMapModal = ref(false)
+const mapsList = ref([])
+const loading = ref(false)
+
+const loadMaps = async () => {
+  try {
+    loading.value = true
+    const response = await api.get('/maps?includeInactive=true')
+    mapsList.value = response.data
+  } catch (error) {
+    console.error('Error loading maps:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+const toggleMapStatus = async (map: any) => {
+  try {
+    if (map.isActive) {
+      await api.post(`/maps/${map._id}/deactivate`)
+    } else {
+      await api.post(`/maps/${map._id}/activate`)
+    }
+    await loadMaps()
+  } catch (error) {
+    console.error('Error toggling map status:', error)
+  }
+}
+
+const deleteMap = async (map: any) => {
+  if (confirm(`Are you sure you want to delete "${map.name}"? This action cannot be undone.`)) {
+    try {
+      await api.delete(`/maps/${map._id}`)
+      await loadMaps()
+    } catch (error) {
+      console.error('Error deleting map:', error)
+    }
+  }
+}
+
+const formatFileSize = (bytes: number) => {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
+}
 
 const logout = async () => {
   await authStore.logout()
   router.push('/login')
 }
+
+onMounted(() => {
+  loadMaps()
+})
 </script>
 
 <template>
@@ -137,40 +194,60 @@ const logout = async () => {
           <div class="content-section">
             <div class="section-header">
               <h2>Map Management</h2>
-              <button class="btn btn-primary">Add Map</button>
+              <button @click="showAddMapModal = true" class="btn btn-primary">Add Map</button>
             </div>
             <div class="table-container">
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th>ID</th>
                     <th>Name</th>
-                    <th>Type</th>
-                    <th>Players</th>
+                    <th>Tags</th>
+                    <th>File Size</th>
                     <th>Status</th>
+                    <th>Created</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="map in maps" :key="map.id">
-                    <td>{{ map.id }}</td>
+                  <tr v-for="map in mapsList" :key="map._id || map.id">
                     <td>{{ map.name }}</td>
-                    <td>{{ map.type }}</td>
-                    <td>{{ map.players }}</td>
                     <td>
-                      <span :class="`status ${map.status}`">
-                        {{ map.status }}
+                      <div class="tags-container">
+                        <span v-for="tag in map.tags" :key="tag" class="tag">
+                          {{ tag }}
+                        </span>
+                      </div>
+                    </td>
+                    <td>{{ formatFileSize(map.fileSize || 0) }}</td>
+                    <td>
+                      <span :class="`status ${map.isActive ? 'active' : 'inactive'}`">
+                        {{ map.isActive ? 'Active' : 'Inactive' }}
                       </span>
                     </td>
+                    <td>{{ formatDate(map.createdAt) }}</td>
                     <td>
-                      <button class="btn btn-sm btn-secondary">Edit</button>
-                      <button class="btn btn-sm btn-danger">Delete</button>
+                      <button 
+                        @click="toggleMapStatus(map)"
+                        :class="`btn btn-sm ${map.isActive ? 'btn-warning' : 'btn-success'}`"
+                      >
+                        {{ map.isActive ? 'Deactivate' : 'Activate' }}
+                      </button>
+                      <button @click="deleteMap(map)" class="btn btn-sm btn-danger">Delete</button>
                     </td>
                   </tr>
                 </tbody>
               </table>
+              <div v-if="mapsList.length === 0" class="empty-state">
+                <p>No maps found. <button @click="showAddMapModal = true" class="link-button">Add your first map</button></p>
+              </div>
             </div>
           </div>
+
+          <!-- Add Map Modal -->
+          <AddMapModal 
+            v-model:open="showAddMapModal" 
+            @map-created="loadMaps"
+          />
         </TabsContent>
 
         <TabsContent value="activity" class="tabs-content">
@@ -505,5 +582,56 @@ const logout = async () => {
 
 .btn-sm:last-child {
   margin-right: 0;
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.tag {
+  background: #e0e7ff;
+  color: #3730a3;
+  padding: 0.125rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: #64748b;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.link-button:hover {
+  color: #2563eb;
+}
+
+.btn-success {
+  background-color: #10b981;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #059669;
+}
+
+.btn-warning {
+  background-color: #f59e0b;
+  color: white;
+}
+
+.btn-warning:hover {
+  background-color: #d97706;
 }
 </style>

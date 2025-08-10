@@ -12,11 +12,7 @@ const socketStore = useSocketStore()
 
 const router = useRouter()
 console.log(router.currentRoute.value.params)
-socketStore.connect({
-  query: {
-    mapId: router.currentRoute.value.params.id as string
-  }
-})
+
 
 onUnmounted(() => {
   socketStore.disconnect()

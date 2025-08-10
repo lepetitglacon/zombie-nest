@@ -1,8 +1,29 @@
 <script setup lang="ts">
+import CreateRoomModal from './CreateRoomModal.vue'
+import {ref} from "vue";
+
+interface RoomData {
+  name: string
+  maxPlayers: number
+  mapId: string
+  isPrivate: boolean
+  password?: string
+}
+
+interface Props {
+  maps?: any[]
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  maps: () => []
+})
+
 const emit = defineEmits<{
   joinFeaturedMap: []
   quickMatch: []
 }>()
+
+const isCreateRoomModalOpen = ref(false)
 
 const featuredMap = {
   name: 'Flora Square',
@@ -53,12 +74,12 @@ const featuredMap = {
             </div>
           </div>
           
-          <div class="flex space-x-3 mt-6">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6">
             <UButton
               size="lg"
               color="green"
               @click="emit('joinFeaturedMap')"
-              class="flex-1 sm:flex-none hover:scale-105 hover:shadow-lg transition-all duration-200"
+              class="hover:scale-105 hover:shadow-lg transition-all duration-200"
             >
               <UIcon name="i-heroicons-rocket-launch" class="w-4 h-4 mr-2" />
               Join Now
@@ -69,11 +90,13 @@ const featuredMap = {
               variant="soft"
               color="gray"
               @click="emit('quickMatch')"
-              class="flex-1 sm:flex-none hover:scale-105 hover:shadow-md transition-all duration-200"
+              class="hover:scale-105 hover:shadow-md transition-all duration-200"
             >
               <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 mr-2" />
               Quick Match
             </UButton>
+
+            <CreateRoomModal :maps="maps" />
           </div>
         </div>
         
@@ -99,5 +122,6 @@ const featuredMap = {
         </div>
       </div>
     </UCard>
+
   </div>
 </template>

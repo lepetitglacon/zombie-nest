@@ -1,15 +1,21 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
+import { ref, onMounted, computed } from "vue"
 import { useAuthStore } from '@/stores/authStore'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import api from '@/services/api'
 
 import DashboardNavigation from '@/components/Home/DashboardNavigation.vue'
 import StatsOverview from '@/components/Home/StatsOverview.vue'
 import QuickPlaySection from '@/components/Home/QuickPlaySection.vue'
-import MapsGrid from '@/components/Home/MapsGrid.vue'
+import RoomsList from '@/components/Home/RoomsList.vue'
 import MatchHistory from '@/components/Home/MatchHistory.vue'
 import ProfileSection from '@/components/Home/ProfileSection.vue'
+import {
+  TabsContent,
+  TabsList,
+  TabsRoot,
+  TabsTrigger
+} from 'radix-vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -70,12 +76,31 @@ const gameSettings = () => {
   console.log('Game settings functionality')
 }
 
+
 const tabs = [
-  { key: 'play', slot: 'play', label: '🎯 Quick Play' },
-  { key: 'maps', slot: 'maps', label: '🗺️ Browse Maps' },
-  { key: 'history', slot: 'history', label: '📊 Match History' },
-  { key: 'profile', slot: 'profile', label: '👤 Profile' }
+  { key: 'play', label: '🎯 Quick Play' },
+  { key: 'rooms', label: '🏠 Browse Rooms' },
+  { key: 'history', label: '📊 Match History' },
+  { key: 'profile', label: '👤 Profile' }
 ]
+
+// Get active tab from URL query parameter
+const route = useRoute()
+const activeTab = computed(() => {
+  const tab = route.query.tab as string
+  return tabs.find(t => t.key === tab)?.key || 'play'
+})
+
+// Update URL when tab changes
+const handleTabChange = (tabKey: string) => {
+  router.push({ 
+    name: 'home', 
+    query: { 
+      ...route.query, 
+      tab: tabKey 
+    } 
+  })
+}
 
 onMounted(() => {
   loadMaps()
@@ -86,54 +111,68 @@ onMounted(() => {
 
 <template>
   <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-    <DashboardNavigation
-      :user-email="authStore.user?.email"
-      @logout="logout"
-      @go-to-admin="goToAdmin"
-    />
+
 
     <StatsOverview :stats="stats" />
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-      <UTabs :items="tabs" class="w-full" default-value="play" >
-        <template #play>
-          <div class="py-6">
-            <QuickPlaySection
-              @join-featured-map="joinFeaturedMap"
-              @quick-match="quickMatch"
-            />
-          </div>
-        </template>
+      <TabsRoot 
+        :default-value="activeTab" 
+        :model-value="activeTab"
+        @update:model-value="handleTabChange"
+        class="w-full"
+      >
+        <!-- Tabs List -->
+        <TabsList class="grid w-full grid-cols-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl p-1 shadow-lg border border-gray-200 dark:border-gray-700">
+          <TabsTrigger 
+            v-for="tab in tabs" 
+            :key="tab.key"
+            :value="tab.key"
+            class="flex items-center justify-center px-4 py-3 text-sm font-medium rounded-lg transition-all data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:text-gray-900 dark:data-[state=inactive]:text-gray-400 dark:data-[state=inactive]:hover:text-gray-100 data-[state=inactive]:hover:bg-gray-100 dark:data-[state=inactive]:hover:bg-gray-700"
+          >
+            {{ tab.label }}
+          </TabsTrigger>
+        </TabsList>
 
-        <template #maps>
-          <div class="py-6">
-            <MapsGrid
-              :maps="maps"
-              @play-map="playMap"
-            />
-          </div>
-        </template>
+        <!-- Tabs Content -->
+        <div class="mt-6">
+          <TabsContent value="play" class="focus:outline-none">
+            <div class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+              <QuickPlaySection
+                :maps="maps"
+                @join-featured-map="joinFeaturedMap"
+                @quick-match="quickMatch"
+              />
+            </div>
+          </TabsContent>
 
-        <template #history>
-          <div class="py-6">
-            <MatchHistory
-              :matches="recentMatches"
-              @view-all-matches="viewAllMatches"
-            />
-          </div>
-        </template>
+          <TabsContent value="rooms" class="focus:outline-none">
+            <div class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+              <RoomsList />
+            </div>
+          </TabsContent>
 
-        <template #profile>
-          <div class="py-6">
-            <ProfileSection
-              :user-email="authStore.user?.email"
-              :stats="stats"
-              @edit-profile="editProfile"
-              @game-settings="gameSettings"
-            />
-          </div>
-        </template>
-      </UTabs>
+          <TabsContent value="history" class="focus:outline-none">
+            <div class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+              <MatchHistory
+                :matches="recentMatches"
+                @view-all-matches="viewAllMatches"
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="profile" class="focus:outline-none">
+            <div class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+              <ProfileSection
+                :user-email="authStore.user?.email"
+                :stats="stats"
+                @edit-profile="editProfile"
+                @game-settings="gameSettings"
+              />
+            </div>
+          </TabsContent>
+        </div>
+      </TabsRoot>
     </div>
   </div>
 </template>

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { router } from "@/router/router.ts"
 import api, { setAuthRefreshFunction } from '@/services/api'
 
@@ -9,8 +9,11 @@ interface LoginCredentials {
 }
 
 interface User {
+  _id: string
   id: string
   email: string
+  role?: string
+  admin: boolean
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -19,6 +22,12 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
   const loading = ref(false)
   const error = ref('')
+  const redirectAfterAuth = ref<string | null>(null)
+
+  // Computed property for admin check
+  const isAdmin = computed(() => {
+    return user.value?.role === 'admin'
+  })
 
   async function login(credentials: LoginCredentials) {
     loading.value = true
@@ -32,6 +41,11 @@ export const useAuthStore = defineStore('auth', () => {
       isAuthenticated.value = true
       
       localStorage.setItem('token', response.data.token)
+      
+      // Redirect to intended URL or home
+      const redirectTo = redirectAfterAuth.value || '/'
+      redirectAfterAuth.value = null
+      router.push(redirectTo)
       
       return { success: true, data: response.data }
     } catch (err: any) {
@@ -81,7 +95,14 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await api.get('/auth/me')
       user.value = response.data
       isAuthenticated.value = true
-      router.push('/')
+      
+      // Only redirect if there's a stored redirect URL
+      if (redirectAfterAuth.value) {
+        const redirectTo = redirectAfterAuth.value
+        redirectAfterAuth.value = null
+        router.push(redirectTo)
+      }
+      
       return true
     } catch (err) {
       await logout()
@@ -108,6 +129,11 @@ export const useAuthStore = defineStore('auth', () => {
       
       localStorage.setItem('token', response.data.token)
       
+      // Redirect to intended URL or home
+      const redirectTo = redirectAfterAuth.value || '/'
+      redirectAfterAuth.value = null
+      router.push(redirectTo)
+      
       return { success: true, data: response.data }
     } catch (err: any) {
       error.value = err.response?.data?.message || err.message || 'Registration failed'
@@ -115,6 +141,10 @@ export const useAuthStore = defineStore('auth', () => {
     } finally {
       loading.value = false
     }
+  }
+
+  function setRedirectAfterAuth(path: string) {
+    redirectAfterAuth.value = path
   }
 
   // Initialize the auth refresh function for the API interceptor
@@ -126,11 +156,14 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     loading,
     error,
+    redirectAfterAuth,
+    isAdmin,
     login,
     register,
     logout,
     refresh,
     checkAuth,
-    initializeAuth
+    initializeAuth,
+    setRedirectAfterAuth
   }
 })

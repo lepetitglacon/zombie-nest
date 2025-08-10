@@ -3,7 +3,6 @@ import { ref, onMounted } from 'vue'
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'radix-vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useRouter } from 'vue-router'
-import AddMapModal from '@/components/AddMapModal.vue'
 import api from '@/services/api'
 
 const authStore = useAuthStore()
@@ -244,7 +243,7 @@ onMounted(() => {
           </div>
 
           <!-- Add Map Modal -->
-          <AddMapModal 
+          <AddMapModal
             v-model:open="showAddMapModal" 
             @map-created="loadMaps"
           />

@@ -92,7 +92,9 @@ const deleteRoom = async (roomId: string) => {
 
       <template v-else>
         <!-- Modern Navbar -->
-        <nav class="bg-white/95 backdrop-blur-md border-b border-gray-200 dark:bg-gray-900/95 dark:border-gray-700 sticky top-0 z-50">
+        <nav
+            v-if="router.currentRoute.value.name !== 'game'"
+            class="bg-white/95 backdrop-blur-md border-b border-gray-200 dark:bg-gray-900/95 dark:border-gray-700 sticky top-0 z-50">
           <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
               <!-- Logo/Brand -->

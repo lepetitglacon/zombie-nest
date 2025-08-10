@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import {ref, computed, onMounted} from 'vue'
+import {ref, computed, onMounted, watch} from 'vue'
 import { router } from "@/router/router.ts"
 import api from '@/services/api'
 import { useSocketStore } from "@/stores/socket.ts"
@@ -239,6 +239,10 @@ export const useRoomStore = defineStore('room', () => {
     socketStore.socket.on('room:joined', (room: Room) => {
       console.log('Joined room:', room)
     })
+    socketStore.socket.on('room:started', ({room}: {room: Room}) => {
+      console.log('room:started:', room)
+      router.push('/game/' + room._id)
+    })
     socketStore.socket.on('room:error', (error) => {
       console.log('Error room:', error)
     })
@@ -252,6 +256,14 @@ export const useRoomStore = defineStore('room', () => {
   const clearError = () => {
     error.value = null
   }
+
+  watch(() => currentRoom.value, (room) => {
+    console.log(room.status)
+    if (!room) return
+    if (room.status === 'in_progress') {
+      router.push('/game/' + room._id)
+    }
+  })
 
   return {
     // State

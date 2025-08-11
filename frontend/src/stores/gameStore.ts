@@ -3,7 +3,8 @@ import { ref } from 'vue'
 
 export const useGameStore = defineStore('game', () => {
   const gameId = ref<null | string>(null)
-  const game = ref<any>(null)
+  const init = ref({})
+  const game = ref(null)
 
   const playerHealth = ref(100)
   const score = ref(0)
@@ -30,6 +31,7 @@ export const useGameStore = defineStore('game', () => {
   return {
     gameId,
     game,
+    init,
 
     playerHealth,
     score,

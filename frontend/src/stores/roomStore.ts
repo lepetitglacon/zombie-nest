@@ -215,7 +215,7 @@ export const useRoomStore = defineStore('room', () => {
     })
     socketStore.socket.on('room:started', async ({room, game}: {room: Room, game: any}) => {
       console.log(room, game)
-      gameStore.gameId = game.id
+      gameStore.gameId = game._id
       currentRoom.value = room
       await router.push(`/game/${room._id}`)
     })

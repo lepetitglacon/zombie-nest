@@ -8,7 +8,9 @@ import Map from "@/components/Game/Map.vue";
     <TresTorusGeometry :args="[1, 0.5, 16, 32]" />
     <TresMeshBasicMaterial color="orange" />
   </TresMesh>
+
   <Map/>
+
   <Player/>
 </template>
 

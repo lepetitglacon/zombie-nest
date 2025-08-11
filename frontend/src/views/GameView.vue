@@ -17,12 +17,12 @@ const router = useRouter()
 console.log(router.currentRoute.value.params)
 
 onMounted(() => {
-  socketStore.on('gameEngine:init:done', (data) => {
-    console.log('game:init', data)
-  })
-  socketStore.emit('client:init:mounted', {
-    roomId: roomStore.currentRoom?._id
-  })
+  // socketStore.on('gameEngine:init:done', (data) => {
+  //   console.log('game:init', data)
+  //   gameStore.init.map = data.map
+  // })
+  // console.log('game mounted')
+  socketStore.emit('client:init:mounted', gameStore.gameId)
 })
 
 onUnmounted(() => {
@@ -52,27 +52,18 @@ function toggleMenu() {
     </div>
   </div>
 
-  <div class="game-container" v-if="gameStore.game">
-    <TresCanvas
-
-        clear-color="#82DBC5"
-        window-size
-    >
-      <TresPerspectiveCamera
-          :position="[3, 3, 3]"
-          :look-at="[0, 0, 0]"
-      />
-      <OrbitControls/>
-      <TresAmbientLight :intensity="1" />
-
-      <GameMeshes/>
-
-    </TresCanvas>
-
-
-  </div>
-
-  <div v-else style="width: 100vw;height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden">
+  <div v-if="!gameStore.game"
+       style="
+       position: absolute;
+       z-index:150;
+       width: 100vw;
+       height: 100vh;
+       display: flex;
+       justify-content: center;
+       align-items: center;
+       overflow: hidden;
+       background-color: #3b82f6;"
+  >
     <div>
       <div>Loading</div>
       <ProgressRoot
@@ -87,6 +78,28 @@ function toggleMenu() {
       </ProgressRoot>
     </div>
   </div>
+
+  <div class="game-container" >
+    <TresCanvas
+
+        clear-color="#82DBC5"
+        window-size
+    >
+      <TresPerspectiveCamera
+          :position="[3, 3, 3]"
+          :look-at="[0, 0, 0]"
+      />
+      <OrbitControls/>
+      <TresAmbientLight :intensity="1"/>
+
+      <GameMeshes/>
+
+    </TresCanvas>
+
+
+  </div>
+
+
 </template>
 
 <style scoped>

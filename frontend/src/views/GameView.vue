@@ -2,11 +2,14 @@
 import {onMounted, onUnmounted, ref} from 'vue'
 import { TresCanvas } from '@tresjs/core'
 import { OrbitControls } from '@tresjs/cientos'
-import { useGameStore } from '@/stores/game'
+import { useGameStore } from '@/stores/gameStore.ts'
 import { useSocketStore } from '@/stores/socket'
 import GameMeshes from "@/components/Game/GameMeshes.vue";
 import {useRouter} from "vue-router";
+import {useRoomStore} from "@/stores/roomStore.ts";
+import {ProgressIndicator, ProgressRoot} from "radix-vue";
 
+const roomStore = useRoomStore()
 const gameStore = useGameStore()
 const socketStore = useSocketStore()
 
@@ -14,15 +17,19 @@ const router = useRouter()
 console.log(router.currentRoute.value.params)
 
 onMounted(() => {
-  socketStore.on('game:init', (data) => {
+  socketStore.on('gameEngine:init:done', (data) => {
     console.log('game:init', data)
   })
-  socketStore.emit('game:init', {})
+  socketStore.emit('client:init:mounted', {
+    roomId: roomStore.currentRoom?._id
+  })
 })
 
 onUnmounted(() => {
   socketStore.disconnect()
 })
+
+const progressValue = ref(10)
 
 const showMenu = ref(false)
 
@@ -45,8 +52,9 @@ function toggleMenu() {
     </div>
   </div>
 
-  <div class="game-container">
+  <div class="game-container" v-if="gameStore.game">
     <TresCanvas
+
         clear-color="#82DBC5"
         window-size
     >
@@ -60,6 +68,24 @@ function toggleMenu() {
       <GameMeshes/>
 
     </TresCanvas>
+
+
+  </div>
+
+  <div v-else style="width: 100vw;height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden">
+    <div>
+      <div>Loading</div>
+      <ProgressRoot
+          v-model="progressValue"
+          class="relative overflow-hidden bg-black rounded-full w-full sm:w-[300px] h-4 sm:h-5"
+          style="transform: translateZ(0)"
+      >
+        <ProgressIndicator
+            class="bg-white rounded-full w-full h-full transition-transform duration-[660ms] ease-[cubic-bezier(0.65, 0, 0.35, 1)]"
+            :style="`transform: translateX(-${100 - progressValue}%)`"
+        />
+      </ProgressRoot>
+    </div>
   </div>
 </template>
 

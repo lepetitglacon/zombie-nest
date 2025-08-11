@@ -2,6 +2,9 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export const useGameStore = defineStore('game', () => {
+  const gameId = ref<null | string>(null)
+  const game = ref<any>(null)
+
   const playerHealth = ref(100)
   const score = ref(0)
   const isGameRunning = ref(false)
@@ -25,9 +28,13 @@ export const useGameStore = defineStore('game', () => {
   }
   
   return {
+    gameId,
+    game,
+
     playerHealth,
     score,
     isGameRunning,
+
     startGame,
     endGame,
     updatePlayerHealth,

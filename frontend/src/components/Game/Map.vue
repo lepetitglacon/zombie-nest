@@ -7,10 +7,10 @@ const socketStore = useSocketStore()
 
 const map = ref(null)
 
-socketStore.on('player.connect.init', async game => {
-  console.log('Loading map', game.map.filePath);
+socketStore.on('gameEngine.init.loadMap', async mapFilepath => {
+  console.log('Loading map', mapFilepath);
 
-  const { scene } = await useGLTF(`http://localhost:3001/assets/maps/${game.map.filePath}`, { draco: true })
+  const { scene } = await useGLTF(`http://localhost:3001/${game.map.filePath}`, { draco: true })
   map.value = scene
 })
 

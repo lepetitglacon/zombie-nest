@@ -4,6 +4,7 @@ import { router } from "@/router/router.ts"
 import api from '@/services/api'
 import { useSocketStore } from "@/stores/socket.ts"
 import { useAuthStore } from "@/stores/authStore.ts"
+import {useGameStore} from "@/stores/gameStore.ts";
 
 export interface RoomPlayer {
   userId: string
@@ -51,6 +52,7 @@ export interface GameMap {
 export const useRoomStore = defineStore('room', () => {
   const socketStore = useSocketStore()
   const authStore = useAuthStore()
+  const gameStore = useGameStore()
 
   const currentRoom = ref<Room | null>(null)
   const availableRooms = ref<Room[]>([])
@@ -62,7 +64,6 @@ export const useRoomStore = defineStore('room', () => {
   const ownRooms = ref<Room[]>([])
 
   onMounted(async () => {
-    setupSocketListeners()
     const mapReq = await api.get('/maps/available')
     availableMaps.value = mapReq.data
     const roomReq = await api.get('/rooms/me')
@@ -214,6 +215,7 @@ export const useRoomStore = defineStore('room', () => {
     })
     socketStore.socket.on('room:started', async ({room, game}: {room: Room, game: any}) => {
       console.log(room, game)
+      gameStore.gameId = game.id
       currentRoom.value = room
       await router.push(`/game/${room._id}`)
     })

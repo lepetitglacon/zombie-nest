@@ -68,7 +68,7 @@ export class NavigationManager {
 
     // If authenticated and on login page, redirect to home
     if (authStore.isAuthenticated && currentRoute.name === 'login') {
-      router.push('/')
+      await router.push('/')
       return
     }
 
@@ -84,7 +84,7 @@ export class NavigationManager {
         console.log('Joining room with invite:', inviteCode)
       } catch (error) {
         console.error('Failed to join room:', error)
-        router.push('/')
+        await router.push('/')
       }
     } else if (roomId) {
       // Direct room access

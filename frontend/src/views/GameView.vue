@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {onUnmounted, ref} from 'vue'
+import {onMounted, onUnmounted, ref} from 'vue'
 import { TresCanvas } from '@tresjs/core'
 import { OrbitControls } from '@tresjs/cientos'
 import { useGameStore } from '@/stores/game'
@@ -13,6 +13,12 @@ const socketStore = useSocketStore()
 const router = useRouter()
 console.log(router.currentRoute.value.params)
 
+onMounted(() => {
+  socketStore.on('game:init', (data) => {
+    console.log('game:init', data)
+  })
+  socketStore.emit('game:init', {})
+})
 
 onUnmounted(() => {
   socketStore.disconnect()

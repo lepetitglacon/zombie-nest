@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {onMounted, onUnmounted, watch} from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useRoomStore } from '@/stores/roomStore'
+import {Room, useRoomStore} from '@/stores/roomStore'
 import { useSocketStore } from '@/stores/socket'
 import PlayersList from '@/components/Room/PlayersList.vue'
 import MapSelector from '@/components/Room/MapSelector.vue'
@@ -20,29 +20,11 @@ const leaveRoom = async () => {
 }
 
 onMounted(async () => {
-  try {
-    // Fetch room data
-    await roomStore.fetchRoom(roomId)
-
-    // Setup socket connection and listeners
-    if (!socketStore.socket?.connected) {
-      await socketStore.connect()
-    }
-
     roomStore.setupSocketListeners()
-
-    // Join room socket channel
-    if (socketStore.socket) {
-      socketStore.socket.emit('room:join', { roomId })
-    }
-  } catch (error) {
-    console.error('Failed to load room:', error)
-    router.push('/')
-  }
+    socketStore.emit('room:join', { roomId })
 })
 
 onUnmounted(() => {
-  // Leave room socket channel
   if (socketStore.socket) {
     socketStore.socket.emit('room:leave', { roomId })
   }

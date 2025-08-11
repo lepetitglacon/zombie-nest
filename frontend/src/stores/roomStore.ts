@@ -62,6 +62,7 @@ export const useRoomStore = defineStore('room', () => {
   const ownRooms = ref<Room[]>([])
 
   onMounted(async () => {
+    setupSocketListeners()
     const mapReq = await api.get('/maps/available')
     availableMaps.value = mapReq.data
     const roomReq = await api.get('/rooms/me')
@@ -116,26 +117,21 @@ export const useRoomStore = defineStore('room', () => {
   }
 
   const joinRoom = async (roomId: string, password?: string) => {
-    try {
-      loading.value = true
-      error.value = null
-      
-      const response = await api.post(`/rooms/${roomId}/join`, { password })
-      currentRoom.value = response.data
-      
-      await router.push(`/room/${roomId}`)
-      return response.data
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to join room'
-      throw err
-    } finally {
-      loading.value = false
+    const response = await api.post(`/rooms/${roomId}/join`, { password })
+
+    if (response.data._id) {
+      await router.push(`/room/${response.data._id}`)
+    } else {
+        error.value = response.data.message || 'Failed to join room'
+        console.error(error.value)
     }
+
+    return response.data
   }
 
   const leaveRoom = async () => {
     if (!currentRoom.value) return
-    
+
     try {
       loading.value = true
       await api.post(`/rooms/${currentRoom.value._id}/leave`)
@@ -150,18 +146,10 @@ export const useRoomStore = defineStore('room', () => {
 
   const toggleReady = async () => {
     if (!currentRoom.value) return
-
     socketStore.emit('room:ready', {
         roomId: currentRoom.value._id,
         playerId: authStore.user?.id
     })
-    
-    // try {
-    //   const response = await api.patch(`/rooms/${currentRoom.value._id}/ready`)
-    //   currentRoom.value = response.data
-    // } catch (err: any) {
-    //   error.value = err.response?.data?.message || 'Failed to toggle ready status'
-    // }
   }
 
   const startGame = async () => {
@@ -170,23 +158,8 @@ export const useRoomStore = defineStore('room', () => {
     try {
       loading.value = true
       const response = await api.post(`/rooms/${currentRoom.value._id}/start`)
-      currentRoom.value = response.data
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to start game'
-    } finally {
-      loading.value = false
-    }
-  }
-
-  const fetchRoom = async (roomId: string) => {
-    try {
-      loading.value = true
-      const response = await api.get(`/rooms/${roomId}`)
-      currentRoom.value = response.data
-      return response.data
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Room not found'
-      throw err
     } finally {
       loading.value = false
     }
@@ -209,7 +182,6 @@ export const useRoomStore = defineStore('room', () => {
       const response = await api.patch(`/rooms/${currentRoom.value._id}/map`, {
         mapId: mapId
       })
-      currentRoom.value = response.data
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to update game options'
     }
@@ -230,18 +202,20 @@ export const useRoomStore = defineStore('room', () => {
 
   // Socket event handlers
   const setupSocketListeners = () => {
-    if (!socketStore.socket) return
+    if (!socketStore.socket) {
+      console.log('socketStore not initialized')
+    } else {
+      console.log('Setting up socket listeners for room events')
+    }
 
-    socketStore.socket.on('room:state', (data: { room: Room, player: RoomPlayer }) => {
-      console.log(data)
-      currentRoom.value = data.room
+    socketStore.socket.on('room:state', (room: Room) => {
+      console.log(room)
+      currentRoom.value = room
     })
-    socketStore.socket.on('room:joined', (room: Room) => {
-      console.log('Joined room:', room)
-    })
-    socketStore.socket.on('room:started', ({room}: {room: Room}) => {
-      console.log('room:started:', room)
-      router.push('/game/' + room._id)
+    socketStore.socket.on('room:started', async ({room, game}: {room: Room, game: any}) => {
+      console.log(room, game)
+      currentRoom.value = room
+      await router.push(`/game/${room._id}`)
     })
     socketStore.socket.on('room:error', (error) => {
       console.log('Error room:', error)
@@ -287,7 +261,6 @@ export const useRoomStore = defineStore('room', () => {
     leaveRoom,
     toggleReady,
     startGame,
-    fetchRoom,
     fetchAvailableRooms,
     updateMap,
     updateGameOptions,

@@ -25,9 +25,18 @@ router.beforeEach((to, from, next) => {
   if (!authStore.isAuthenticated && to.name !== 'login') {
     return next({ name: 'login' });
   }
+  if (authStore.isAuthenticated && to.name === 'login') {
+    return next({ name: 'home' });
+  }
 
   next();
 })
+
+watch(() => authStore.isAuthenticated, (isAuthenticated) => {
+  if (isAuthenticated && router.currentRoute.value.name === 'login') {
+    router.push({ name: 'home' });
+  }
+});
 
 // Navigation functions
 const goToHome = () => {
@@ -66,7 +75,6 @@ const isAdminUser = computed(() => {
 // Room management functions
 const joinActiveRoom = async (roomId: string) => {
   try {
-    await roomStore.joinRoom(roomId)
   } catch (error) {
     console.error('Failed to join room:', error)
   }

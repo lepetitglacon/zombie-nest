@@ -119,7 +119,7 @@
           
           <!-- Join Button -->
           <div class="ml-6">
-            <button @click="joinRoom(room)"
+            <button @click="roomStore.joinRoom(room._id)"
                     :disabled="room.players?.length >= room.gameOptions?.maxPlayers || room.status !== 'waiting'"
                     class="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium">
               <span v-if="room.players?.length >= room.gameOptions?.maxPlayers">Full</span>
@@ -164,7 +164,7 @@
                   class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
             Cancel
           </button>
-          <button @click="confirmJoinRoom"
+          <button @click=""
                   :disabled="!roomPassword.trim()"
                   class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors">
             Join Room
@@ -219,33 +219,6 @@ const refreshRooms = async () => {
     console.error('Failed to fetch rooms:', error)
   } finally {
     loading.value = false
-  }
-}
-
-const joinRoom = async (room: Room) => {
-  if (room.isPrivate) {
-    selectedRoom.value = room
-    showJoinModal.value = true
-    return
-  }
-  
-  try {
-    await roomStore.joinRoom(room._id)
-  } catch (error) {
-    console.error('Failed to join room:', error)
-  }
-}
-
-const confirmJoinRoom = async () => {
-  if (!selectedRoom.value || !roomPassword.value.trim()) return
-  
-  try {
-    await roomStore.joinRoom(selectedRoom.value._id, roomPassword.value)
-    showJoinModal.value = false
-    roomPassword.value = ''
-    selectedRoom.value = null
-  } catch (error) {
-    console.error('Failed to join private room:', error)
   }
 }
 

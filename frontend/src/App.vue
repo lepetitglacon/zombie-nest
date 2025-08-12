@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {useSocketStore} from "@/stores/socket.ts";
+import {useSocketStore} from "@/stores/socketStore.ts";
 import {router} from "@/router/router.ts";
 import {useAuthStore} from "@/stores/authStore.ts";
 import {watch, computed} from "vue";
@@ -13,7 +13,6 @@ import {
   DropdownMenuTrigger,
 } from 'radix-vue'
 import {useRoomStore} from "@/stores/roomStore.ts";
-import api from '@/services/api'
 
 const authStore = useAuthStore()
 const roomStore = useRoomStore()
@@ -37,61 +36,6 @@ watch(() => authStore.isAuthenticated, (isAuthenticated) => {
     router.push({ name: 'home' });
   }
 });
-
-// Navigation functions
-const goToHome = () => {
-  router.push({ name: 'home' })
-}
-
-const goToProfile = () => {
-  router.push({ name: 'home', query: { tab: 'profile' } })
-}
-
-const goToSettings = () => {
-  // TODO: Create settings page
-  console.log('Going to settings...')
-}
-
-const goToAdmin = () => {
-  router.push({ name: 'admin' })
-}
-
-const logout = async () => {
-  await authStore.logout()
-  router.push({ name: 'login' })
-}
-
-// User info
-const userInitials = computed(() => {
-  if (!authStore.user?.email) return 'U'
-  const email = authStore.user.email
-  return email.charAt(0).toUpperCase()
-})
-
-const isAdminUser = computed(() => {
-  return authStore.isAdmin
-})
-
-// Room management functions
-const joinActiveRoom = async (roomId: string) => {
-  try {
-  } catch (error) {
-    console.error('Failed to join room:', error)
-  }
-}
-
-const deleteRoom = async (roomId: string) => {
-  if (!confirm('Are you sure you want to delete this room?')) return
-  
-  try {
-    await api.delete(`/rooms/${roomId}`)
-    // Refresh room list
-    const roomReq = await api.get('/rooms/me')
-    roomStore.ownRooms = roomReq.data
-  } catch (error) {
-    console.error('Failed to delete room:', error)
-  }
-}
 </script>
 
 <template>
@@ -108,7 +52,6 @@ const deleteRoom = async (roomId: string) => {
               <!-- Logo/Brand -->
               <div class="flex items-center">
                 <button 
-                  @click="goToHome"
                   class="flex items-center space-x-3 hover:opacity-80 transition-opacity"
                 >
                   <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
@@ -123,7 +66,6 @@ const deleteRoom = async (roomId: string) => {
               <!-- Navigation Links -->
               <div class="hidden md:flex items-center space-x-8">
                 <button 
-                  @click="goToHome"
                   class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   🎮 Play
@@ -135,8 +77,7 @@ const deleteRoom = async (roomId: string) => {
                   🗺️ Maps
                 </button>
                 <button 
-                  v-if="isAdminUser"
-                  @click="goToAdmin"
+                  v-if="authStore.isAdmin"
                   class="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   ⚙️ Admin
@@ -151,10 +92,13 @@ const deleteRoom = async (roomId: string) => {
                   <DropdownMenuTrigger asChild>
                     <button class="group relative">
                       <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm group-hover:shadow-lg group-hover:scale-105 transition-all duration-200">
-                        {{ userInitials }}
+                        {{ authStore.user?.email }}
                       </div>
                       <!-- Online indicator -->
-                      <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 border-2 border-white dark:border-gray-900 rounded-full"></div>
+                      <div
+                          class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 border-2 border-white dark:border-gray-900 rounded-full"
+                          :class="socketStore.isConnected ? 'bg-green-400' : 'bg-red-400'"
+                      ></div>
                     </button>
                   </DropdownMenuTrigger>
 
@@ -180,7 +124,6 @@ const deleteRoom = async (roomId: string) => {
                     <!-- Navigation Items -->
                     <DropdownMenuGroup>
                       <DropdownMenuItem 
-                        @select="goToProfile"
                         class="flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
                       >
                         <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -190,7 +133,6 @@ const deleteRoom = async (roomId: string) => {
                       </DropdownMenuItem>
 
                       <DropdownMenuItem 
-                        @select="goToSettings"
                         class="flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
                       >
                         <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -211,8 +153,7 @@ const deleteRoom = async (roomId: string) => {
                       </DropdownMenuItem>
 
                       <DropdownMenuItem 
-                        v-if="isAdminUser"
-                        @select="goToAdmin"
+                        v-if="authStore.isAdmin"
                         class="flex items-center px-3 py-2 text-sm text-purple-700 dark:text-purple-300 rounded-md hover:bg-purple-50 dark:hover:bg-purple-900/20 cursor-pointer"
                       >
                         <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -226,7 +167,7 @@ const deleteRoom = async (roomId: string) => {
 
                     <!-- Logout -->
                     <DropdownMenuItem 
-                      @select="logout"
+                      @select="authStore.logout"
                       class="flex items-center px-3 py-2 text-sm text-red-700 dark:text-red-400 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer"
                     >
                       <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

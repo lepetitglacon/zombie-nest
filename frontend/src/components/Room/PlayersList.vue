@@ -12,14 +12,14 @@ const urlInput = ref<HTMLInputElement>()
 const urlCopied = ref(false)
 
 const emptySlots = computed(() => {
-  const currentPlayers = roomStore.currentRoom?.players.length || 0
-  const maxPlayers = roomStore.currentRoom?.gameOptions.maxPlayers || 8
+  const currentPlayers = roomStore.room?.players.length || 0
+  const maxPlayers = roomStore.room?.gameOptions.maxPlayers || 8
   return Math.max(0, maxPlayers - currentPlayers)
 })
 
 const roomUrl = computed(() => {
-  if (!roomStore.currentRoom) return ''
-  return `${window.location.origin}/room/${roomStore.currentRoom._id}`
+  if (!roomStore.room) return ''
+  return `${window.location.origin}/room/${roomStore.room._id}`
 })
 
 const getPlayerInitials = (name: string): string => {
@@ -98,12 +98,12 @@ const copyRoomUrl = async () => {
     <div class="flex items-center justify-between mb-4">
       <h3 class="text-xl font-semibold text-white">Players</h3>
       <div class="text-sm text-gray-400">
-        {{ roomStore.currentRoom?.players.length || 0 }} / {{ roomStore.currentRoom?.gameOptions.maxPlayers || 8 }}
+        {{ roomStore.room?.players.length || 0 }} / {{ roomStore.room?.gameOptions.maxPlayers || 8 }}
       </div>
     </div>
 
     <div class="space-y-3">
-      <div v-for="player in roomStore.currentRoom?.players" 
+      <div v-for="player in roomStore.room?.players"
            :key="player.userId"
            class="flex items-center justify-between p-3 rounded-lg"
            :class="{
@@ -201,7 +201,7 @@ const copyRoomUrl = async () => {
     </div>
 
     <!-- Room URL for sharing (if host) -->
-    <div v-if="roomStore.isHost && roomStore.currentRoom" 
+    <div v-if="roomStore.isHost && roomStore.room"
          class="mt-6 pt-4 border-t border-white/10">
       <div class="text-sm text-gray-400 mb-2">Share room URL:</div>
       <div class="flex items-center gap-2">

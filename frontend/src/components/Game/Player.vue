@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useGLTF } from '@tresjs/cientos'
-import {useSocketStore} from "@/stores/socket.ts";
+import {useSocketStore} from "@/stores/socketStore.ts";
 import {ref, toRaw} from "vue";
 
 const socketStore = useSocketStore()

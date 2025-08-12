@@ -3,7 +3,7 @@ import {onMounted, onUnmounted, ref} from 'vue'
 import { TresCanvas } from '@tresjs/core'
 import { OrbitControls } from '@tresjs/cientos'
 import { useGameStore } from '@/stores/gameStore.ts'
-import { useSocketStore } from '@/stores/socket'
+import { useSocketStore } from '@/stores/socketStore.ts'
 import GameMeshes from "@/components/Game/GameMeshes.vue";
 import {useRouter} from "vue-router";
 import {useRoomStore} from "@/stores/roomStore.ts";

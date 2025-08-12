@@ -2,7 +2,7 @@
 import {onMounted, onUnmounted, watch} from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {Room, useRoomStore} from '@/stores/roomStore'
-import { useSocketStore } from '@/stores/socket'
+import { useSocketStore } from '@/stores/socketStore.ts'
 import PlayersList from '@/components/Room/PlayersList.vue'
 import MapSelector from '@/components/Room/MapSelector.vue'
 
@@ -20,8 +20,28 @@ const leaveRoom = async () => {
 }
 
 onMounted(async () => {
-    roomStore.setupSocketListeners()
-    socketStore.emit('room:join', { roomId })
+    // roomStore.setupSocketListeners()
+  console.log('joining room', roomId)
+    socketStore.emit('room:join', {roomId}, async (res: any) => {
+      console.log(res)
+      if (res.success) {
+        console.log('joined room', roomId)
+
+        socketStore.on('room:state', (room: Room) => {
+          console.log('room state updated', room)
+          roomStore.room = room
+        })
+
+        socketStore.emit('room:init', undefined, res => {
+          console.log(res)
+          roomStore.room = res
+        })
+
+      } else {
+        console.log("countld't join room", roomId, res)
+        await router.push('/')
+      }
+    })
 })
 
 onUnmounted(() => {
@@ -31,7 +51,7 @@ onUnmounted(() => {
 })
 
 watch(() => socketStore.socket.connected, () => {
-  if (!roomStore.currentRoom) {
+  if (!roomStore.room) {
     socketStore.socket.emit('room:join', { roomId })
   }
 })
@@ -49,23 +69,23 @@ watch(() => socketStore.socket.connected, () => {
     </div>
 
     <!-- Room Content -->
-    <div v-else-if="roomStore.currentRoom" class="max-w-7xl mx-auto">
+    <div v-else-if="roomStore.room" class="max-w-7xl mx-auto">
       <!-- Header -->
       <div class="flex items-center justify-between mb-8">
         <div>
-          <h1 class="text-4xl font-bold text-white mb-2">{{ roomStore.currentRoom.name }}</h1>
-          <p class="text-gray-300">{{ roomStore.currentRoom.description || 'No description' }}</p>
+          <h1 class="text-4xl font-bold text-white mb-2">{{ roomStore.room.name }}</h1>
+          <p class="text-gray-300">{{ roomStore.room.description || 'No description' }}</p>
         </div>
         
         <div class="flex items-center gap-4">
           <!-- Room Status Badge -->
           <div class="px-4 py-2 rounded-full border"
                :class="{
-                 'border-yellow-500 bg-yellow-500/10 text-yellow-400': roomStore.currentRoom.status === 'waiting',
-                 'border-green-500 bg-green-500/10 text-green-400': roomStore.currentRoom.status === 'in_progress',
-                 'border-red-500 bg-red-500/10 text-red-400': roomStore.currentRoom.status === 'finished'
+                 'border-yellow-500 bg-yellow-500/10 text-yellow-400': roomStore.room.status === 'waiting',
+                 'border-green-500 bg-green-500/10 text-green-400': roomStore.room.status === 'in_progress',
+                 'border-red-500 bg-red-500/10 text-red-400': roomStore.room.status === 'finished'
                }">
-            {{ roomStore.currentRoom.status.replace('_', ' ').toUpperCase() }}
+            {{ roomStore.room.status.replace('_', ' ').toUpperCase() }}
           </div>
 
           <!-- Leave Room Button -->
@@ -92,32 +112,32 @@ watch(() => socketStore.socket.connected, () => {
               
               <div class="bg-white/5 rounded-lg p-3">
                 <p class="text-gray-400 text-sm">Max Players</p>
-                <p class="text-white font-medium">{{ roomStore.currentRoom.gameOptions.maxPlayers }}</p>
+                <p class="text-white font-medium">{{ roomStore.room.gameOptions.maxPlayers }}</p>
               </div>
               
               <div class="bg-white/5 rounded-lg p-3">
                 <p class="text-gray-400 text-sm">Difficulty</p>
-                <p class="text-white font-medium capitalize">{{ roomStore.currentRoom.gameOptions.difficulty }}</p>
+                <p class="text-white font-medium capitalize">{{ roomStore.room.gameOptions.difficulty }}</p>
               </div>
               
               <div class="bg-white/5 rounded-lg p-3">
                 <p class="text-gray-400 text-sm">Game Mode</p>
-                <p class="text-white font-medium capitalize">{{ roomStore.currentRoom.gameOptions.gameMode }}</p>
+                <p class="text-white font-medium capitalize">{{ roomStore.room.gameOptions.gameMode }}</p>
               </div>
               
               <div class="bg-white/5 rounded-lg p-3">
                 <p class="text-gray-400 text-sm">Friendly Fire</p>
-                <p class="text-white font-medium">{{ roomStore.currentRoom.gameOptions.friendlyFire ? 'Enabled' : 'Disabled' }}</p>
+                <p class="text-white font-medium">{{ roomStore.room.gameOptions.friendlyFire ? 'Enabled' : 'Disabled' }}</p>
               </div>
               
-              <div v-if="roomStore.currentRoom.gameOptions.timeLimit" class="bg-white/5 rounded-lg p-3">
+              <div v-if="roomStore.room.gameOptions.timeLimit" class="bg-white/5 rounded-lg p-3">
                 <p class="text-gray-400 text-sm">Time Limit</p>
-                <p class="text-white font-medium">{{ roomStore.currentRoom.gameOptions.timeLimit }} min</p>
+                <p class="text-white font-medium">{{ roomStore.room.gameOptions.timeLimit }} min</p>
               </div>
               
               <div class="bg-white/5 rounded-lg p-3">
                 <p class="text-gray-400 text-sm">Privacy</p>
-                <p class="text-white font-medium">{{ roomStore.currentRoom.isPrivate ? 'Private' : 'Public' }}</p>
+                <p class="text-white font-medium">{{ roomStore.room.isPrivate ? 'Private' : 'Public' }}</p>
               </div>
               
             </div>

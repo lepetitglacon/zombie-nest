@@ -5,11 +5,6 @@ import {useAuthStore} from "@/stores/authStore.ts";
 import {useRoomStore} from "@/stores/roomStore.ts";
 import {useGameStore} from "@/stores/gameStore.ts";
 
-export type ClientState = {
-  room?: RoomDocument;
-  game?: GameDocument;
-};
-
 export const useSocketStore = defineStore('socket', () => {
   const authStore = useAuthStore()
   const roomStore = useRoomStore()
@@ -26,14 +21,14 @@ export const useSocketStore = defineStore('socket', () => {
     isConnected.value = false
     console.log('Disconnected from server', reason)
   })
-  socket.value.on('client:state', (state: ClientState) => {
+  socket.value.on('client:state', (state: any) => {
     console.log('client state', state)
     roomStore.room = state.room
     gameStore.game = state.game
   })
 
-  function connect(opts= {}) {
-    socket.value.connect(opts)
+  function connect() {
+    socket.value.connect()
   }
   
   function disconnect() {
@@ -44,9 +39,9 @@ export const useSocketStore = defineStore('socket', () => {
     }
   }
   
-  function emit(event: string, data: any) {
+  function emit(event: string, data?: any, ack?: Function) {
     if (socket.value) {
-      socket.value.emit(event, data)
+      socket.value.emit(event, data, ack)
     }
   }
   
@@ -58,14 +53,12 @@ export const useSocketStore = defineStore('socket', () => {
 
   watch(() => authStore.isAuthenticated, () => {
     if (authStore.isAuthenticated) {
-      if (!socket.value) {
-        connect({ query: {
-          token: authStore.token,
-          userId: authStore?.user?.id,
-        } })
+      if (!socket.value.io.opts?.query) {
+        socket.value.io.opts.query = {}
       }
+      socket.value.io.opts.query.token = authStore.token
+      connect()
     } else {
-      console.log('not auth')
       disconnect()
     }
   })

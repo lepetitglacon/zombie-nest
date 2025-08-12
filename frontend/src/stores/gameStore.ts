@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import {useSocketStore} from "@/stores/socket.ts";
+import {useSocketStore} from "@/stores/socketStore.ts";
 
 export const useGameStore = defineStore('game', () => {
   const socketStore = useSocketStore()

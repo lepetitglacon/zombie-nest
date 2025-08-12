@@ -11,10 +11,10 @@ const showMapSelector = ref(false)
 // Mock data for available maps - replace with API call
 const availableMaps = ref(roomStore.availableMaps)
 
-const currentMap = computed(() => {return roomStore.availableMaps.find(map => map._id === roomStore.currentRoom?.mapId)})
+const currentMap = computed(() => {return roomStore.availableMaps.find(map => map._id === roomStore.room?.mapId)})
 
 const canChangeMap = computed(() => {
-  return roomStore.isHost && roomStore.currentRoom?.status === 'waiting'
+  return roomStore.isHost && roomStore.room?.status === 'waiting'
 })
 
 const onMapSelected = async (map: GameMap) => {
@@ -36,7 +36,7 @@ const onMapSelected = async (map: GameMap) => {
   <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
     <div class="flex items-center justify-between mb-4">
       <h3 class="text-xl font-semibold text-white">Map Selection</h3>
-      <div v-if="roomStore.isHost && roomStore.currentRoom?.status === 'waiting'" 
+      <div v-if="roomStore.isHost && roomStore.room?.status === 'waiting'"
            class="text-sm text-blue-400">
         Click to change map
       </div>

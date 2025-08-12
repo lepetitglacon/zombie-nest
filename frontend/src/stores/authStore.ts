@@ -110,9 +110,9 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
   
-  function initializeAuth() {
+  async function initializeAuth() {
     if (token.value) {
-      checkAuth()
+      await checkAuth()
     }
   }
   

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import {ref, computed, onMounted, watch} from 'vue'
 import { router } from "@/router/router.ts"
 import api from '@/services/api'
-import { useSocketStore } from "@/stores/socket.ts"
+import { useSocketStore } from "@/stores/socketStore.ts"
 import { useAuthStore } from "@/stores/authStore.ts"
 import {useGameStore} from "@/stores/gameStore.ts";
 
@@ -71,8 +71,8 @@ export const useRoomStore = defineStore('room', () => {
     }
     const mapReq = await api.get('/maps/available')
     availableMaps.value = mapReq.data
-    const roomReq = await api.get('/rooms/me')
-    ownRooms.value = roomReq.data
+    // const roomReq = await api.get('/rooms/me')
+    // ownRooms.value = roomReq.data
   })
 
   // Computed properties
@@ -123,7 +123,7 @@ export const useRoomStore = defineStore('room', () => {
   }
 
   const joinRoom = async (roomId: string, password?: string) => {
-    const response = await api.post(`/rooms/${roomId}/join`, { password })
+    const response = await api.post(`/rooms/join/${roomId}`, { password })
 
     if (response.data._id) {
       await router.push(`/room/${response.data._id}`)

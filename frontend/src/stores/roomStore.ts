@@ -54,7 +54,7 @@ export const useRoomStore = defineStore('room', () => {
   const authStore = useAuthStore()
   const gameStore = useGameStore()
 
-  const currentRoom = ref<Room | null>(null)
+  const room = ref<Room>()
   const availableRooms = ref<Room[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -64,6 +64,11 @@ export const useRoomStore = defineStore('room', () => {
   const ownRooms = ref<Room[]>([])
 
   onMounted(async () => {
+    const roomId = router.currentRoute.value.params?.id
+    if (roomId) {
+      console.log('joining room', roomId)
+      socketStore.emit('room:join', {roomId})
+    }
     const mapReq = await api.get('/maps/available')
     availableMaps.value = mapReq.data
     const roomReq = await api.get('/rooms/me')
@@ -72,24 +77,24 @@ export const useRoomStore = defineStore('room', () => {
 
   // Computed properties
   const isHost = computed(() => {
-    return currentRoom.value?.hostId === authStore.user._id
+    return room.value?.hostId === authStore.user._id
   })
 
   const currentPlayer = computed(() => {
-    if (!currentRoom.value || !authStore.user) return null
-    return currentRoom.value.players.find(p => p.userId === authStore.user!.id)
+    if (!room.value || !authStore.user) return null
+    return room.value.players.find(p => p.userId === authStore.user!.id)
   })
 
   const allPlayersReady = computed(() => {
-    if (!currentRoom.value) return false
-    return currentRoom.value.players.every(p => p.ready || p.isHost)
+    if (!room.value) return false
+    return room.value.players.every(p => p.ready || p.isHost)
   })
 
   const canStartGame = computed(() => {
     return isHost.value && 
            allPlayersReady.value && 
-           currentRoom.value?.players.length >= 1 &&
-           currentRoom.value?.status === 'waiting'
+           room.value?.players.length >= 1 &&
+           room.value?.status === 'waiting'
   })
 
   // Actions
@@ -105,7 +110,7 @@ export const useRoomStore = defineStore('room', () => {
       error.value = null
       
       const response = await api.post('/rooms', roomData)
-      currentRoom.value = response.data
+      room.value = response.data
       
       await router.push(`/room/${response.data._id}`)
       return response.data
@@ -131,12 +136,12 @@ export const useRoomStore = defineStore('room', () => {
   }
 
   const leaveRoom = async () => {
-    if (!currentRoom.value) return
+    if (!room.value) return
 
     try {
       loading.value = true
-      await api.post(`/rooms/${currentRoom.value._id}/leave`)
-      currentRoom.value = null
+      await api.post(`/rooms/${room.value._id}/leave`)
+      room.value = null
       await router.push('/')
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to leave room'
@@ -146,19 +151,19 @@ export const useRoomStore = defineStore('room', () => {
   }
 
   const toggleReady = async () => {
-    if (!currentRoom.value) return
+    if (!room.value) return
     socketStore.emit('room:ready', {
-        roomId: currentRoom.value._id,
+        roomId: room.value._id,
         playerId: authStore.user?.id
     })
   }
 
   const startGame = async () => {
-    if (!currentRoom.value || !isHost.value) return
+    if (!room.value || !isHost.value) return
     
     try {
       loading.value = true
-      const response = await api.post(`/rooms/${currentRoom.value._id}/start`)
+      const response = await api.post(`/rooms/${room.value._id}/start`)
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to start game'
     } finally {
@@ -177,10 +182,10 @@ export const useRoomStore = defineStore('room', () => {
   }
 
   const updateMap = async (mapId: string) => {
-    if (!currentRoom.value || !isHost.value) return
+    if (!room.value || !isHost.value) return
 
     try {
-      const response = await api.patch(`/rooms/${currentRoom.value._id}/map`, {
+      const response = await api.patch(`/rooms/${room.value._id}/map`, {
         mapId: mapId
       })
     } catch (err: any) {
@@ -189,13 +194,13 @@ export const useRoomStore = defineStore('room', () => {
   }
 
   const updateGameOptions = async (gameOptions: Partial<GameOptions>) => {
-    if (!currentRoom.value || !isHost.value) return
+    if (!room.value || !isHost.value) return
     
     try {
-      const response = await api.patch(`/rooms/${currentRoom.value._id}/game-options`, {
+      const response = await api.patch(`/rooms/${room.value._id}/game-options`, {
         gameOptions
       })
-      currentRoom.value = response.data
+      room.value = response.data
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to update game options'
     }
@@ -209,14 +214,14 @@ export const useRoomStore = defineStore('room', () => {
       console.log('Setting up socket listeners for room events')
     }
 
-    socketStore.socket.on('room:state', (room: Room) => {
-      console.log(room)
-      currentRoom.value = room
-    })
+    // socketStore.socket.on('room:state', (room: Room) => {
+    //   console.log(room)
+    //   room.value = room
+    // })
     socketStore.socket.on('room:started', async ({room, game}: {room: Room, game: any}) => {
       console.log(room, game)
       gameStore.gameId = game._id
-      currentRoom.value = room
+      room.value = room
       await router.push(`/game/${room._id}`)
     })
     socketStore.socket.on('room:error', (error) => {
@@ -224,7 +229,7 @@ export const useRoomStore = defineStore('room', () => {
     })
 
     socketStore.socket.on('room:disbanded', () => {
-      currentRoom.value = null
+      room.value = null
       router.push('/')
     })
   }
@@ -233,7 +238,7 @@ export const useRoomStore = defineStore('room', () => {
     error.value = null
   }
 
-  watch(() => currentRoom.value, (room) => {
+  watch(() => room.value, (room) => {
     console.log(room.status)
     if (!room) return
     if (room.status === 'in_progress') {
@@ -243,7 +248,7 @@ export const useRoomStore = defineStore('room', () => {
 
   return {
     // State
-    currentRoom,
+    room,
     availableRooms,
     loading,
     error,

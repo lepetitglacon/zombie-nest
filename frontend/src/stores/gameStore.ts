@@ -1,7 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import {useSocketStore} from "@/stores/socket.ts";
 
 export const useGameStore = defineStore('game', () => {
+  const socketStore = useSocketStore()
+
   const gameId = ref<null | string>(null)
   const init = ref({})
   const game = ref(null)
@@ -26,6 +29,11 @@ export const useGameStore = defineStore('game', () => {
   
   function updateScore(newScore: number) {
     score.value = newScore
+  }
+
+  function bind() {
+    socketStore.on('room:joined', () => console.log('room joined'))
+    socketStore.on('room:game:state', (data) => game.value = data)
   }
   
   return {

@@ -16,12 +16,15 @@ const socketStore = useSocketStore()
 const router = useRouter()
 console.log(router.currentRoute.value.params)
 
-onMounted(() => {
+onMounted(async () => {
+  const roomId = router.currentRoute.value.params?.id
   // socketStore.on('gameEngine:init:done', (data) => {
   //   console.log('game:init', data)
   //   gameStore.init.map = data.map
   // })
   // console.log('game mounted')
+  // await roomStore.joinRoom(router.currentRoute.value.params?.id ?? '')
+  socketStore.emit('room:join', {roomId})
   socketStore.emit('client:init:mounted', gameStore.gameId)
 })
 
@@ -81,7 +84,7 @@ function toggleMenu() {
 
   <div class="game-container" >
     <TresCanvas
-
+        preset="realistic"
         clear-color="#82DBC5"
         window-size
     >

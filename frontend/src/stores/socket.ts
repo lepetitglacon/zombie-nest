@@ -2,24 +2,38 @@ import { defineStore } from 'pinia'
 import {ref, watch} from 'vue'
 import { io, Socket } from 'socket.io-client'
 import {useAuthStore} from "@/stores/authStore.ts";
+import {useRoomStore} from "@/stores/roomStore.ts";
+import {useGameStore} from "@/stores/gameStore.ts";
+
+export type ClientState = {
+  room?: RoomDocument;
+  game?: GameDocument;
+};
 
 export const useSocketStore = defineStore('socket', () => {
   const authStore = useAuthStore()
+  const roomStore = useRoomStore()
+  const gameStore = useGameStore()
 
-  const socket = ref<Socket | null>(null)
+  const socket = ref<Socket>(io('http://localhost:3001', {autoConnect: false}))
   const isConnected = ref(false)
-  
-  function connect(opts) {
-    socket.value = io('http://localhost:3001', {...opts, autoConnect: true})
 
-    socket.value.on('connect', () => {
-      isConnected.value = true
-      console.log('Connected to server')
-    })
-    socket.value.on('disconnect', (reason) => {
-      isConnected.value = false
-      console.log('Disconnected from server', reason)
-    })
+  socket.value.on('connect', () => {
+    isConnected.value = true
+    console.log('Connected to server')
+  })
+  socket.value.on('disconnect', (reason) => {
+    isConnected.value = false
+    console.log('Disconnected from server', reason)
+  })
+  socket.value.on('client:state', (state: ClientState) => {
+    console.log('client state', state)
+    roomStore.room = state.room
+    gameStore.game = state.game
+  })
+
+  function connect(opts= {}) {
+    socket.value.connect(opts)
   }
   
   function disconnect() {
